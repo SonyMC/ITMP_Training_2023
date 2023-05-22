@@ -1,0 +1,71 @@
+Start a AWS account:
+https://aws.amazon.com/free/?trk=09863622-0e2a-4080-9bba-12d378e294ba&sc_channel=ps&sc_campaign=acquisition&sc_medium=ACQ-P|PS-GO|Brand|Desktop|SU|AWS|Core|IN|EN|Text&s_kwcid=AL!4422!3!453325185034!b!!g!!%2Baws%20%2Baccount&ef_id=Cj0KCQjwxb2XBhDBARIsAOjDZ3551qpBC76gjWGTOcp7zKjQA2QG4sHsgcTMKG7SLphpDEHNZz46XHwaAgtAEALw_wcB:G:s&s_kwcid=AL!4422!3!453325185034!b!!g!!%2Baws%20%2Baccount&all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=*all&awsf.Free%20Tier%20Categories=*all
+	- Pre-rquisites:
+		-  Personal deetails including address
+		-  Valid debit/credit card 
+	- Click free acccount
+	- Enter email address, pwd, account name
+	- Select Personal Account and enter personal details ( name, phone, countryaddress)
+	- Payment Info : Enter credit/debit card details ( AWS might do a 1 rupee transaction to verify) 
+	- Confirm your identity
+	- Click on cotnact me
+	- Call will eb recieved from Amazon and you have to tell them the verification code(usually 4 digit no.) shown in screen
+	- In case of any probelms, create a case with AWS support 
+	- Once logged in, seelct free tier plan
+	- Personlaize yoru expreience: Optional
+	- Click on 'complete sign-up'
+	- Click 'Sign in to the Console'
+	- Enter credentials
+	- This will be your root account . Will have complete access. Strongly recommended not to use root account for activities but we shoud be usign IAM user
+
+	-Class Demo:  Create a IAM ( Identity and Acess Management) user
+		- Will be demonstarted in the class
+		- Give access to IAM user to billign info:
+			- Login as root user
+			- Click on accoutn name-> dropdown -> my account 
+				- Search for IAM
+					- IAM User and Role Access to Billing information
+						- Edit
+						- Activate IAM Access
+						- Update  	
+		- For setting permissions :
+				-  Create New Group
+						 	- name = Developers
+							- Policy type = 
+								- Admin access
+								- Billing
+				- Create a usr:
+					- Add user -> user name = xxxxx
+					- Access type = Seelct both 
+						- Progammatic access
+						- AWS Mgmnt Console access
+					- Custom pwd
+					- Uncheck ' user must create a new pwd at next login'
+					- Group = assign 'Developers'
+					- Create user
+					- Dowload .csv
+					- Note: We cannot use the same url that we used to login as root  user to login.
+						- Copy the url shown and bookmark it. We need thsi url to login as the new IAM user
+		- Montorr Billing Dashboard everyday
+			-  Click on accoun tname and in dropdown select 'My Billing Dashboard'
+		- Set Billing Alerts:
+			- Login as IAM user or Root user
+			- Billing dashboard -> Billing preferences:
+				- Receive pdf invoice by email 
+				- Recieve free tier usage alerts 
+				- Recieve billign alerts
+				- Save preferences
+		- Option 1 : Cloudwatch:
+			- Is a montorign service and can trigger alarms
+			- REgion : us-east-1
+			- Alarms: Create alarm -> Conditon : GT 0 USD
+				- SNS( Simple Notification Service)  topic:
+					- email
+				- Alarm name 
+		-Option 2: AWs-> Budgets:
+				- Create abudget
+					- Name 
+					- Budget amt = 1 USD
+					- Configure alerts
+						- set threshhold- Note; Validate yoru email in inbox to get notifications  							   
+				

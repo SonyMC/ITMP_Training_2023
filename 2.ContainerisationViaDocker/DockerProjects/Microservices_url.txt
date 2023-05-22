@@ -1,0 +1,82 @@
+package:com.mailsonymathew.microservices
+
+com.mailsonymathew.microservices
+
+Micorservices_v2_ulr:
+-------------------------
+(1) Spring Cloud Config Server: http://localhost:8888
+
+(2) Accessing properties file: http://localhost:8888/limits-service-v2/default
+
+(3) limits url: http://localhost:8080/limits
+
+
+(4) Currency exchange service: 
+http://localhost:8000/currency-exchange/from/USD/to/INR
+
+Response Structure
+{
+   "id":10001,
+   "from":"USD",
+   "to":"INR",
+   "conversionMultiple":65.00,
+   "environment":"8000 instance-id"
+}
+
+
+- Creating a new instance in Eclipe : Run -> Run configuration-> seelct runnign instance -> right click-> duplicate-> change name-> Arguments tab->VM arguments=-Dserver.port=8001
+
+- url to h2 console: localhost:8000/h2-console
+	- Once in console overwrite the JDBC url with what we have provided in the application-properties file = jdbc:h2:mem:testdb
+
+(5) Currency Conversion Service:
+URL
+Without feign: http://localhost:8100/currency-conversion/from/USD/to/INR/quantity/10
+With feign :   http://localhost:8100/currency-converter-feign/from/USD/to/INR/quantity/10
+
+Documentation: 
+http://localhost:8100/currency-conversion-apidoc/
+http://localhost:8100/currency-conversion-apidef/
+
+Response Structure
+{
+  "id": 10001,
+  "from": "USD",
+  "to": "INR",
+  "conversionMultiple": 65.00,
+  "quantity": 10,
+  "totalCalculatedAmount": 650.00,
+  "environment": "8000 instance-id"
+}
+
+
+
+(5) Eureka naming server : 
+- url: localhost:8761/
+
+(6) API Gateway: 
+Note: the upper case service name is copied from Eureka UI
+- http://localhost:8765/currency-exchange-service-v2/currency-exchange/from/USD/to/INR
+
+- http://localhost:8765/currency-conversion-service-v2/currency-conversion/from/USD/to/INR/quantity/10  -> request will be executed without without load balancer 
+
+- http://localhost:8765/currency-conversion-service-v2/currency-converter-feign/from/USD/to/INR/quantity/10 -> request will be executed with load balancer 
+
+
+- After implemantation of customized routes:
+	- http://localhost:8765/get   : will redirect to httpbin.org:80 as opecified in APigatewayConfiguration.java
+	- http://localhost:8765/currency-exchange/from/USD/to/INR
+	- http://localhost:8765/currency-conversion/from/USD/to/INR/quantity/10
+	- http://localhost:8765/currency-converter-feign/from/USD/to/INR/quantity/10
+	- http://localhost:8765/currency-conversion-new/from/USD/to/INR/quantity/10
+
+http://localhost:8765/currency-conversion/api-doc/
+
+
+(7) Sample API for Resilence 4j Circuit breaker:
+Curency Exchange service : http://localhost:8000/sample-api
+
+
+(8) Zipkin:
+http://localhost:9411/zipkin/
+

@@ -1,0 +1,338 @@
+****************** SETUP ****************************************
+
+Refer :
+------
+https://docs.docker.com/desktop/kubernetes/
+https://docs.docker.com/get-started/kube-deploy/ 
+https://www.docker.com/blog/how-kubernetes-works-under-the-hood-with-docker-desktop/
+
+ Install kubectl:
+----------------
+	- this is by default installed with Docker desktop
+	- cmd: kubectl version 
+
+- Set Kubectl context:
+---------------------
+	- cmd:  kubectl config get-contexts
+	- Ensure you change the context so that kubectl is pointing to docker-desktop: 
+		- cmd: kubectl config use-context docker-desktop
+
+
+- List available nodes
+------------------------
+cmd: kubectl get nodes
+	 -Wil lshow one node for docker desktop
+
+
+
+*************************DEPOLYMENTS *********************************
+
+(1) Deploy application to kebernetes cluster:
+kubectl create deployment hello-world-rest-api --image=in28min/hello-world-rest-api:0.0.1.RELEASE
+kubectl create deployment hello-world-rest-api --image=mailsonymathew/hello-world-java:0.0.1.RELEASE
+	
+	- deployment.apps/hello-world-rest-api created
+
+
+
+(2) Expose deployment to outer world
+kubectl expose deployment hello-world-rest-api --type=LoadBalancer --port=8080
+
+	- service/hello-world-rest-api exposed
+
+(3) Get events 
+	- kubectl get events
+	- kubectl get ev
+
+(4) Get pods
+	- kubectl get pods
+	- kubectl get po
+
+(5) Get replica sets 
+	- kubectl get replicaset
+	- kubectl get rs
+
+(6) Get deployment
+kubectl get deployment 
+
+(7) Get service
+	- kubectl get service
+	- kubectl get svc
+		- NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+		hello-world-rest-api   LoadBalancer   10.107.131.101   localhost     8080:32181/TCP   64s
+		kubernetes             ClusterIP      10.96.0.1        <none>        443/TCP          15m
+
+	- Note: am unable to execut ethe url in browser: localhost:8080/hello-world
+
+(8) Delete pod, events, service, deployments 
+kubectl delete pod/event/service/deployment name 
+
+(9) Get pods with n/w,container  info
+	kubectl get pods -o wide
+	# Note :
+		-  A node can contain multiple podes. 
+		- Pod is a collection of containers
+		 - Each pod can contain multiple containers.
+		- Pod is the smallest deployable unit in a node ( not container as without a pod we cannot have a container)
+		- Containers within the same pod can talk to each other.
+
+
+(10) Explain pods
+	kubectl explain pods
+
+
+(11) Get detailed info on a certain pod 
+	kubectl get pods -> list all pods , copy name of pod 
+	kubectl describe pod podname
+
+(12) Get replica sets
+	- REplica sets ensure that a specified number of pod replicas are running at ay given time
+	kubectl get replicaset
+	kubectl get replicasets
+	kubectl get rs
+	# Note : Replica sets monitors pods and if there are lesset number of pods than required, it automatically created pods.
+
+(13) Increase number of pods (i.e tell replicaset to scale to a particular number of pods) 
+		- kubectl scale deployment hello-world-rest-api --replicas=3
+	
+
+(14) Sort events by timestamp 
+	- kubectl get events --sort-by=.metadata.creationTimestamp	
+
+
+(15) Explain replicaset 
+	- kubectl explain replicaset
+
+(16) More detils including images in the replicaset 
+	- kubectl get rs -o wide
+
+(17) Describe pod 
+	- kubectl describe pod name
+
+(18)Note : Does not work for Docker K8s 
+Deploy new image version of hello-world-api to pod  - Error scenario 
+		- Note: For K8S in Docker Desktop, you will ge tthe message 'error: unable to find container named "hello-world-rest-api"'
+	-kubectl set image deployment hello-world-rest-api hello-world-rest-api=DUMMY_IMAGE:TEST
+	#Notes:
+		(1)the app name can be found via 'kubectl get rs -o wide' 
+		(2) first 'hello-world-rest-api' is the deployment app name
+		(3) second 'hello-world-rest-api' is the container 
+		(4) '=DUMMY_IMAGE:TEST' is teh name of the new version of the image we want to deploy to the pod
+		(5) Note : DUMMY_IMAGE:TEST is an error image path. However teh application wont go down. If we get the replica sets (kubectl get rs -o wide) we can see an image has been created with name DUMMY_IMAGE:TEST. However number of pods in ready status is 0 for it. Meaning it cannot be deplyed. 
+		(6) The application however contains runnign with the available correct timage.
+		(7) If we get teh pods ( kubectl get pods) , we can see one pod with status as 'InvalidImageName'
+
+
+
+(19)Note : Does not work for Docker K8s 
+ Deploy new image version of hello-world-api to pod  - Correct scenario
+	-kubectl set image deployment hello-world-rest-api hello-world-rest-api=mailsonymathew/hello-world-rest-api:0.0.2.RELEASE
+
+(20) Get statuses of all manager node components 
+
+	- kubectl get componentstatuses
+
+
+(21) Rollout history of kubectl
+	- kubectl rollout history deployment hello-world-rest-api
+
+
+(22) Using curl command in gcp:
+	- get the endpoint from Services & ingress and type the following in the google command prompt
+		- curl http://35.200.124.198:8080/hello-world
+
+
+(23) Rolling back to a previous revision:
+	- kubectl rollout undo deployment hello-world-rest-api --to-revision=1
+
+
+(24) Pause a deployment 
+	-  kubectl rollout pause deployment hello-world-rest-api
+
+
+(25) Unpause a deployment 
+	-  kubectl rollout unpause deployment hello-world-rest-api
+
+
+(26) get logs for a specific pod 
+	- kubectl logs podname
+
+
+(27) follow logs fro a specific pod 
+	- kubectl logs -f podname
+
+(28) get deployment 
+	- kubectl get deployment deployment-name
+
+(29) get deployment  in yaml format
+	- kubectl get deployment deploymant-name -o yaml 
+	E.g kubectl get deployment hello-world-rest-api -o yaml
+
+
+(30) get and save deployment  in yaml format
+	-  kubectl get deployment deploymant-name -o yaml >> deployment.yaml
+	E.g kubectl get deployment hello-world-rest-api -o yaml >> deployment.yaml
+		- deployment.yaml will be downloaded to C:\Users\DELL
+
+
+(31) get and save service details  in yaml format
+	- kubectl get service deployment-name -o yaml > service.yaml
+     E.g kubectl get service hello-world-rest-api -o yaml >> service.yaml
+
+
+
+
+(32) Applying specs specified in a yaml file 
+	- kubectl apply -f deployment.yaml
+
+(33) get all details of pods, service, deployments , replicasets
+	- kubectl get all 
+	- kubectl get all -o wide 
+	
+
+
+(34) delete all pods, service, deployments , replicasets etc. using a single label ( instead of deelting one by one) 
+	- get label using -o wide command 
+	- label will be under selector column 
+	- kubectl delete all -l labelname ( E.g. kubectl delete all -l app=hello-world-rest-api)
+
+
+(35) Watch the service 
+	- kubectl get svc     --watch
+	- kubectl get service --watch
+
+(36)Testing the service / gettign the external IP 
+	- once we run 'kubectl get service --watch' we will get teh external ip
+	- use teh external ip to test teh service 
+	- E.g External ip: 34.84.244.233
+	- Service name in browser : http://34.84.244.233:8080/hello-world
+
+
+(37)Watching the service from google cloud shell:
+	- watch curl http://34.84.244.233:8080/hello-world
+	- will show latest service stats every 2 seconds
+
+(38)Show difference with exosting deployment in kubectl
+	- kubectl diff -f deployment.yaml
+	- Note: This command needs diff util to be installed in windows. 
+
+
+(39)Apply changes to deployment.yaml
+	- kubectl apply -f deployment.yaml
+	- kubectl apply -f ../currency-conversion/deployment.yaml    ( Note : We care specifiying path if .yaml file in thsi deploy command).
+
+(40) Delete all related to a deployment 
+	- kubectl delete all -l app=hello-world-rest-api
+	- above command wil ldeelte everything(pods. service, deployments) with a label of app=hello-world-rest-api
+
+
+(41) Try to deploy a replica set 
+	- kubectl apply -f replicaSet.yaml
+	- Note : though thsi will work, it willn tpick up any new revisions. All replica set cares baout is that the required no. of pods are available. That is why we require a deployment (i.e. kind tag in yaml falg needs to eb set tp 'Deploymnet' instead of 'ReplicaSet'
+	- Usign deployment instead of replicaset to deply will nesure that for each release there is a replica set.
+	- Only way to force the replicaset to pick up teh new version, is to deelte the existing pods which will then ensure that the new pods created pick up the latest version.
+
+
+(42) Delete a deployment 
+	- kubectl delete deployment hello-world-rest-api
+ 
+
+(43) get all namespaces from all pods 
+	- kubectl get pods --all-namespaces
+
+
+(44) get namespaces relevant to a certain api  
+	- kubectl get pods --all-namespaces app=hello-world-rest-api
+
+
+(45) get namespaces relevant to a certain all label   
+	- kubectl get pods --all-namespaces -l app=hello-world-rest-api
+
+
+(46)get all namespaces from all services 
+	- kubectl get services --all-namespaces
+
+(47)sort namepsaces by type  
+	- kubectl get services --all-namespaces --sort-by=.spec.type
+	- .spec.type -> go to deployment.yaml and find 'type' under 'spec'
+	- Note : we can sort by what we want . Just pick up the right path from the yaml file.
+
+
+(48)sort namepsaces by name 
+	- kubectl get services --all-namespaces --sort-by=.metadata.name
+	- .metadata.name -> go to deployment.yaml and find 'name' under 'metadata'
+ 
+(49)Get info about cluster
+	- kubectl cluster-info
+
+(50)Get detailed info  about cluster 
+	- kubectl cluster-info dump
+
+(51)Get info( CPU usage ,memoryetc.)  about nodes 
+	- kubectl top node
+
+(52)Get info( CPU usage,memory etc.)  about podes 
+	- kubectl top pod
+
+
+(53)Get info( CPU usage,memory etc.)  about podes 
+	- kubectl top pod
+
+(54)Get namespaces
+	- kubectl get namespace
+	- kubectl get ns 
+
+(55)Get nodes
+	- kubectl get nodes
+	- kubectl get no 
+
+(56) Alternate method to get exteral apis via service :
+	- kubectl get service --watch
+
+(57) Get environment variable name:
+	- First get all services (kubectl get service)
+	- environment variable name = service name( replace all hyphens with underscores and change to CAPS)  + _SERVICE_HOST ( E.g CURRENCY_EXCHANGE_SERVICE_HOST)
+
+
+(58) How does currency conversion service know the location of currency exchange service :
+	- In the 00-configmap-currency-conversion.yaml( founfd in currency-conversion folder) we are specifying this:
+		- CURRENCY_EXCHANGE_SERVICE_HOST: http://currency-exchange
+	- Essentially the environment variable name for currency exchange service  ( calculated as mentioned in step above) : http://currency-exchange 
+	- the http://currency-exchange  is derived from the application name.
+
+(59) Enable discovery of currency exchange service :
+	- One problem of above methid is that of the currency conversion service was launched before teh corrency echange srvice, it would not know the existence of currency-exchange service 
+	- Hence we have to enable a discoverer 
+	- This can be done by addign the environment configruation within the container section in the deployment.yaml file of currency-conversion service :
+	        env:
+          	- name: CURRENCY_EXCHANGE_SERVICE_HOST
+            	value: http://currency-exchange
+
+(60) Centralized configuration 
+	- Kubernetes does thisthrough config maps 
+	- refer '00-configmap-currency-conversion.yaml' in currency-conversion-service folder
+
+(61) Apply config maps 
+	- kubectl apply -f "config-map-name".yaml
+
+
+(62) get config maps 
+	- kubectl get configmap
+	- kubectl get configmaps
+	- kubectl get configMaps
+
+(63) Describe config maps 
+	- kubectl describe configmap 'name of config map as beget fromget command above' 
+
+
+(64) Linking the config map to the deployment.yaml:
+	- Inside the deployment.yaml of currency-conversion, do :
+		- comment the currency-exchange-url and insert section as available under 'valueFrom' section in Containers.
+
+
+(65) EDeployment files for currency exchange & currency conversion  can be found in D:\OneDrive\Study\DevOps\Docker commands\DockerK8S\Kubernetes Deployment file backups
+
+(66) For urls - refer teh readme.md in DockerCommands/projects/microservices
+
+
+

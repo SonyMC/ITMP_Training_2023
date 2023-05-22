@@ -1,0 +1,38 @@
+- minikube is local Kubernetes, focusing on making it easy to learn and develop for Kubernetes.
+
+ 
+
+- What you’ll need
+2 CPUs or more
+2GB of free memory
+20GB of free disk space
+Internet connection
+Container or virtual machine manager, such as: Docker, Hyperkit, Hyper-V, KVM, Parallels, Podman, VirtualBox, or VMware Fusion/Workstation
+
+- Refer : https://minikube.sigs.k8s.io/docs/start/
+
+(1) Dowlonad installation file: https://minikube.sigs.k8s.io/docs/start/
+
+(2) Add the minikube.exe binary to your PATH
+	- Run PowerShell as Administrator.
+		- $oldPath = [Environment]::GetEnvironmentVariable('Path', [EnvironmentVariableTarget]::Machine)
+if ($oldPath.Split(';') -inotcontains 'C:\minikube'){ `
+  [Environment]::SetEnvironmentVariable('Path', $('{0};C:\minikube' -f $oldPath), [EnvironmentVariableTarget]::Machine) `
+}
+
+(2) Open powershell in admin mode: 
+	- cmd: Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
+
+
+(3) Start your cluster:
+	- Open cmd propmet in admin mode: 
+		- cmd: minikube start
+
+
+(4) Interact with your cluster
+	- cmd: kubectl get po -A
+
+
+(5) Stop the Kbs cluster:
+	- cmd: minikube stop
+

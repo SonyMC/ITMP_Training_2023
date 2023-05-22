@@ -1,0 +1,428 @@
+To do : Create working conversion service
+Note:
+
+	
+	-  Setup cluster authentication : https://docs.aws.amazon.com/eks/latest/userguide/cluster-auth.html
+
+
+(1) Provision EKS via terrraform templates:
+	- Run the terraform scripts in :
+	- D:\OneDrive\Study\DevOps\Devops Notes\Kubernetes\Kubernetes Deployment file backups\10-Kubernetes\learn-terraform-provision-eks-cluster
+	- Refer README.md fie for instructiond 
+	- At the end of the creation of teh EKS, copy teh following output( as defined in output.tf) from the console:
+cluster_endpoint = "https://1EEA6465932FA4DF154FD56F005C363B.gr7.us-east-1.eks.amazonaws.com"
+cluster_id = "mailsonymathew-eks-IMsGTcDo"
+cluster_name = "mailsonymathew-eks-IMsGTcDo"
+cluster_security_group_id = "sg-05817db6bed2aef78"
+region = "us-east-1"
+
+
+
+
+(2) Configure kubectl to connect to cluster: 
+	- Refer Refer https://aws.amazon.com/premiumsupport/knowledge-center/eks-cluster-connection/ 
+	- Instal aws cli
+	- Now that you've provisioned your EKS cluster, you need to configure kubectl.
+	- First, open the outputs.tf file to review the output values. You will use the region and cluster_name outputs to configure kubectl.
+			- Region: outputs.tf -> variables.tf =us-east-1
+			- cluster_name  : outputs.tf -> local.cluster_name
+								- local.cluster_name is defined in main.tf		
+								- The full EKS name can can be found in : AWS -> EKS = mailsonymathew-eks-IMsGTcDo
+
+	- Optional: Run the following command to retrieve the access credentials for your cluster and configure kubectl context: 
+		- cmd: aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)
+				- Note: Above command does nto work in Windows. Instead use raw values as below
+		- cmd: aws eks --region us-east-1 update-kubeconfig --name mailsonymathew-eks-IMsGTcDo
+		
+	- Update kube config:
+			cmd: aws eks update-kubeconfig --region us-east-1  --name mailsonymathew-eks-IMsGTcDo
+			- Response : 'Added new context arn:aws:eks:us-east-1:172172108913:cluster/mailsonymathew-eks-IMsGTcDo to C:\Users\DELL\.kube\config'
+			- Copy the context name 'arn:aws:eks:us-east-1:172172108913:cluster/mailsonymathew-eks-IMsGTcDo in C:\Users\DELL\.kube\config'
+
+(3)  Optional: View your cluster information:
+	 cmd: kubectl config view --minify --flatten --context=arn:aws:eks:us-east-1:172172108913:cluster/mailsonymathew-eks-IMsGTcDo > cluster_info.yaml
+		- Output will be saved to cluster_info.yaml
+
+
+(5)***** Optional step**** : Configure the provider : 
+			- https://learn.hashicorp.com/tutorials/terraform/kubernetes-provider:
+			- For AWS  :
+				-  Create a new file named kubernetes.tf and add the following configuration as specified in link above:
+				- Copy the kubernetes.tf file to teh folder where your deployment.yaml file exists
+
+
+
+(6)Check connections: 
+	- cmd: kubectl get svc 
+		- Wil show one main k8s service running
+	- cmd: kubectl version
+		- Will show client(our) and server( AWS EKS) versions)
+
+
+(4) Docker images:
+
+	-Note : Code - 
+			-4.spring-microservices-v2-main\05.kubernetes
+
+I have created following images in docker hub:
+	- Currency Exchange Service: 
+		- mailsonymathew/currency-exchange-service-k8s:0.0.1.RELEASE
+		- mailsonymathew/currency-exchange-service-k8s:0.0.2.RELEASE
+		- ## URL : http://localhost:8000/currency-exchange/from/USD/to/INR
+	
+	- Currency Conversion Service: 
+	
+		- Using cmd line K8S deployment : mailsonymathew/currency-conversion-service-k8s:0.0.1.RELEASE
+			- Difference is in thh way we have configured the currency exchange url in CurrencyExchangeProxy.java
+			
+		- Using K8S deployment.yaml     :mailsonymathew/currency-conversion-service-k8s-deployment-yaml:0.0.2.RELEASE
+			- - Difference is in the way we have configured the currency exchange url in CurrencyExchangeProxy.java
+
+		- ## URL : http://localhost:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+			- Note: If we try accessign the url by running the first currency-conversion container in a local docker desktop , it will show a white label error. This is because we would need to dfine a common docker network. However this will work if we try first currency-conversion applicaiton in local ( i.e. using eclipse)   
+
+
+(5) Deploy microservices containers:
+
+		- Microservice code and K8S deployment files are available in:
+			- D:\OneDrive\Study\DevOps\Devops Notes\Kubernetes\spring-microservices-v2-main\05.kubernetes
+
+		- Ensure kubectl is working: 
+			- cmd: kubectl version
+
+		- deploy currency-exchange:
+			- cmd: kubectl create deployment currency-exchange --image=mailsonymathew/currency-exchange-service-k8s:0.0.1.RELEASE
+			- Make sure there are no pod crashes:
+				- cmd: kubectl get po
+
+		- create currency-exchange service(i.e expose):
+			- cmd: kubectl expose deployment currency-exchange --type=LoadBalancer --port=8000
+
+		- deploy currency-conversion:
+			- cmd: kubectl create deployment currency-conversion --image=mailsonymathew/currency-conversion-service-k8s:0.0.1.RELEASE
+			- Make sure there are no pod crashes:
+				- cmd: kubectl get po
+
+		- create currecny-conversion service(i.e expose):
+			- cmd: kubectl expose deployment currency-conversion --type=LoadBalancer --port=8100
+
+
+		- get exposed services:
+			- cmd : kubectl get svc
+			- note down external ip adresses( this might take some time to appear ):
+				- currency-exchange   : aafa821f75d924a9bbed63b2ed073680-103727722.us-east-1.elb.amazonaws.com
+				- currency-conversion : a052864c5f4f449f9918528045a55fed-952753289.us-east-1.elb.amazonaws.com
+
+			- Trouble shooting:
+				- cmd: kubectl describe svc <service-name>
+					- E.g: kubectl describe svc currency-exchange
+					- check for errors / warnings. possible error is described under the events field
+				
+
+		-Run following cmds after connecting to cluster :
+			- currency exchange urL: http://localhost:8000/currency-exchange/from/USD/to/INR
+			- replace local host with external ip :
+				: http://aafa821f75d924a9bbed63b2ed073680-103727722.us-east-1.elb.amazonaws.com:8000/currency-exchange/from/USD/to/INR
+			- cmd: curl http://aafa821f75d924a9bbed63b2ed073680-103727722.us-east-1.elb.amazonaws.com:8000/currency-exchange/from/USD/to/INR :
+				- will get service response back
+
+			- **** Note: For some reason am gettign a whitelabel error for currecny conversion !!!	. Skip this step ...
+			- currency-conversion-feign-url: http://localhost:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+			- replace local host with external ip :
+				: http://a052864c5f4f449f9918528045a55fed-952753289.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+			- cmd: curl http://a052864c5f4f449f9918528045a55fed-952753289.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+				- response: white label error 
+			- The above urls can alo be verified from a browser : whitel label error response
+
+
+(6) Environment variable in Currency Conversion Service package define in CurrencyExchangeProxy.java:
+		- The env variable CURRENCY_EXCHANGE_SERVICE_HOST is automatically defined in Kubernetes 
+		- For all services Kubernetes automatically creates env variables:
+			- E.g. if service name is sony_ms the env name will be SONY_MS_SERVICE_HOST
+
+(7) In Currency exchange controller we are also printing out the pod name using environment.getProperty("HOSTNAME");
+
+
+
+
+(8) Specifying k8s configuration in yml:
+	- Get deployments: 
+		- kubectl get deployments
+	- Set up yaml file for deployment 'currency-exchange':
+		-   -
+			- cmd: cd 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+			- Get deployment in yaml format:
+				- cmd: kubectl get deployment currency-exchange -o yaml 
+				- will print the entire yaml in console 
+			- Save deployment to a yaml file:
+				- cmd: kubectl get deployment currency-exchange -o yaml >> deployment.yaml
+				- This will generate a deployment.yaml file in the current directory 
+			- Save the service detals to a yaml file:
+				- cmd: kubectl get service currency-exchange -o yaml >> service.yaml
+				- Thsi will generate teh service.yaml file in the current directory 
+			- Copy paste the service.yaml file details to deployment.yaml and delete the service.yaml:
+				- Towards end of deployment.yaml fiel insert 3 hyfens(---) and after taht paste service.yaml fiel details. 
+				- Delete service.yaml
+			- change number of replica sets:
+				- search for 'replicas'( under deployment details -> sepc)  and change to 2 
+			- Apply replica set changes:
+				- See directory contents to ensure deployment.yaml is available:
+					- cmd: dir 
+				- See differences from previous deployment to what is specified in the deployment.ymal file:
+					- cmd:kubectl diff -f deployment.yaml
+					- Note : this will need diff util to be installed( use choclatey: cmd: choco install diffutils
+				- apply the changes:
+					- kubectl apply -f deployment.yaml
+					- ignore teh warinings
+				- verfiy pods:
+					- kubectl get pods
+				- verify by running the curl cmd :
+					- cmd: curl http://a33682ce7136c4469b5a2364e2e78743-687165558.us-east-1.elb.amazonaws.com:8000/currency-exchange/from/USD/to/INR
+					- use watch to execute teh curl cmd every 2 secs:
+						- cmd: watch curl http://a33682ce7136c4469b5a2364e2e78743-687165558.us-east-1.elb.amazonaws.com:8000/currency-exchange/from/USD/to/INR
+						- to terminate ; ctrl + c
+						- Note: For windows: 
+							- Open powershell: 
+									cmd" while (1) {curl http://a33682ce7136c4469b5a2364e2e78743-687165558.us-east-1.elb.amazonaws.com:8000/currency-exchange/from/USD/to/INR; sleep 5}
+
+						
+					- the above is demo of the automatic load balncign that k8s provides
+					- Note: k8s provides service discover and load balancing for free 
+	
+
+(9) Get all details of pods, service, deployments , replicasets:
+	- cmd: kubectl get all -o wide	
+	- app anem will be available in the oputput of the above cmd
+
+(10) Delete all deployment related components for currency-exchange and cunnrecy-conversion:
+	- cmd: kubectl delete all -l app=currency-exchange
+	- cmd: kubectl delete all -l app=currency-conversion
+
+(11) Get all k8s configured compneents:
+	- cmd: kubectl get all
+
+(12)Deploy currency-exchange from deployment-yaml :
+	- cd to : 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+	- cmd: kubectl apply -f deployment.yaml		   
+	- Get pods:
+		- cmd: kubectl get po
+	- Get services:
+		- cmd: kubectl get svc
+	- External ip:
+		- 104.154.40.180
+	- url:
+		- http://104.154.40.180:8000/currency-exchange/from/USD/to/INR
+		- cmd: curl http://104.154.40.180:8000/currency-exchange/from/USD/to/INR
+
+(13) Deploy currency-conversion-service using deployment.yaml:
+	- 4.spring-microservices-v2-main\05.kubernetes\currency-conversion-service-kubernetes
+	- Make changes in deployment.yaml file in currency-conversion folder
+	- Apply changes:
+		- cmd: kubectl apply -f deployment.yaml		
+	- Get services:
+		- cmd: kubectl get svc
+	- External ip:
+		-  a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com
+	- Note : Wait for a couple of mins before trign teh url
+	- url:
+			- currency-conversion-feign-url: http://localhost:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+			- replace local host with external ip :
+				: http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+			- cmd: curl http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+				- response: json response
+			- The above urls can alo be verified from a browser.
+
+(14) Note: Problem with using the K8Senv variable CURRENCY_EXCHANGE_SERVICE_HOST :
+ Note : The problem with using the K8S service host as env variable is that it depends on the Currency-Exchange service being up. It is much better to use a customized environment variable as below which we will configre in the deployment.yaml file
+	- Refer CurrencyExchangeProxy.java in Currency Conversion code package
+
+//CHANGE-KUBERNETES
+//@FeignClient(name = "currency-exchange", url = "${CURRENCY_EXCHANGE_SERVICE_HOST:http://localhost}:8000")
+// Note : The problem with using the K8S service host as env variable is that it depends on the Currency-Exchange service beign up. It is much better to use a customized environment variable as below which we will configure in the deployment.yaml file
+@FeignClient(name = "currency-exchange", url = "${CURRENCY_EXCHANGE_URI:http://localhost}:8000")
+
+
+
+
+(15) Deploy Currency conversion service:
+	- change image version in deployment.yaml 
+	- cd to the 4.spring-microservices-v2-main\05.kubernetes\currency-conversion-service-kubernetes
+	- compare difference:
+		- cmd: kubectl diff -f deployment.yaml
+			- Note: Does not work in windows
+	- apply changes:
+		- cmd: kubectl apply -f deployment.yaml
+	- Note that the external ps do not chage with teh new deployment
+	- Get logs:
+		- cmd: kubectl get po
+		- cmd: kubectl logs pod-id
+		- follow logs:
+			- cmd: kubectl logs -f pod-id
+	- Verify:
+		- cmd: curl http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+
+(16) Centralized configuration for env variables instead of hard coding in yaml:
+	- Create config map:
+		- D:\OneDrive\Study\DevOps\Devops Notes\Kubernetes\spring-microservices-v2-main\05.kubernetes\currency-conversion-service-kubernetes
+			 - cmd: kubectl create configmap service-name --from-literal=key=value
+			 - E.g:
+				- cmd: kubectl create configmap currency-conversion --from-literal=CURRENCY_EXCHANGE_URI=http://currency-exchange
+		- list confgmaps:
+			- cmd : kubectl get configmap
+		- get specifi conifg-map:
+			- cmd: kubectl get configmap configmap-name
+			- Eg: cmd: kubectl get configmap currency-conversion
+		- get configmap in yaml format:
+			- cmd: 	kubectl get configmap currency-conversion -o yaml
+		- output configfile:
+			- cmd: 	kubectl get configmap currency-conversion -o yaml >> configmap.yaml
+
+(17) Add configmap.yaml to deployment.yaml:
+		- D:\OneDrive\Study\DevOps\Devops Notes\Kubernetes\spring-microservices-v2-main\05.kubernetes\currency-conversion-service-kubernetes
+		- clean and condense configmap.yaml
+		- open deployment.yaml:
+			- Add 3 hypens at teh end and copy paste contnts of configmap.yaml
+			- Coment out encv configuration in deploymnt.yaml
+				- Instead add reference to configmap define below as follows:
+					- envFrom:
+					    - configMapRef:
+                                                name: currency-conversion
+						    
+				
+		- Delete configmap.yaml
+		- Apply changes:
+			- cmd: kubectl apply -f deployment.yaml
+
+
+
+
+
+
+(18) Microservices deployment - Error scenario:
+	- Get rollout history for curency conversion:
+		- cmd: kubectl rollout history deployment currency-conversion:
+		- will show list of revisions 
+	- Get rollout history for curency exchange:
+		- cmd: kubectl rollout histroy deployment currency-exchange:
+		- will show list of revisions 
+	- Go into currency-exchange deployment.yaml and deploy:
+		- go to 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+		- - change IMAGE to DUMMY -> purposeful error
+		- 
+		- cmd: kubectl apply -f deployment.yaml
+			- Response:
+					deployment.apps/currency-exchange configured
+					service/currency-exchange unchanged
+	-  Wait for a couple of minutes
+			- cmd:watch -n 0.1 curl http://35.193.163.95:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+						- Note: For windows: 
+							- Open powershell: 
+									cmd: while (1) {curl http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10; sleep 5}
+			- you can see that the curency-conversion is still working
+	- cmd: kubectl get po
+		- You can see a pods with an invalid image name
+
+			
+	- Undo deployment:
+		- Get history of deployments for currency-exchange:
+			-  cmd: kubectl rollout history deployment currency-exchange
+		- Undo deployment:
+			- cmd: kubectl rollout undo deployment currency-exchange --to-revision=1
+	- New dployment:
+		- Go into currency-exchange deployment.yaml and deploy:
+		- change IMAGE to docker push mailsonymathew/mmv2-docker-currency-exchange-service-kubernetes:0.0.12-SNAPSHOT
+		- go to 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+		- cmd: kubectl diff -f deployment.yaml
+			- Noe: needs installing diff utility in windows
+		- cmd: kubectl apply -f deployment.yaml
+		-  Go onto cmd prompt:
+				cmd: watch -n 0.1 curl http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+						- Note: For windows: 
+							- Open powershell: 
+								cmd: while (1) {curl http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10; sleep 5}
+			- you can see that the durign deployment the service went down
+			- cmd: kubectl get pods:
+				- you can see thhe old version was killed but teh new version isjust startign up. Thsi is  for a very short duration	
+
+(19) Avoiding downtime : Configuring Liveness and Readiness Probes fro Microservices 
+	- Kubernetes uses probes to check health of a microservice:
+		- if readiness probe is not successful, no traffic is sent to the pod
+		- if liveness probe is not successful, the pod is restarted
+	- Spring Boot actuator (>=2.3) provides inbuilt readiness and liveness probes:
+		- urls:
+			- /health/readiness
+			- /health/liveness
+	- Actuator is included in pom.xml
+	- Actuator probes( helath and liveness) are configured in application.properties
+	- Accessing the probes foro currency-exchange:
+		- url: External ip adress:8000/actuator:
+			-3104.154.40.180:8000/actuator	
+			- 4 links will be shown
+			- select actuator/health:
+				- two groups: liveness, readiness
+			- Liveness probe url: External ip adress:8000/actuator/health/liveness
+				- status : UP
+			- Readiness probe url: External ip adress:8000/actuator/health/readiness
+				- status: UP
+			- However both Liveness and Readiness probes will be down durign deployment
+	- Configuring K8s fro liveness and readiness probes:
+		- Currency Exchange deployment.yaml:
+			- In the spec after containers-> image, imagePullPolicy, name and before restartPolicy add the following:
+        readinessProbe:
+          httpGet:
+            port: 8000
+            path: /actuator/health/readiness
+        livenessProbe:
+          httpGet:
+            port: 8000
+            path: /actuator/health/liveness
+      restartPolicy: Always
+
+	- Deploy : 
+		- 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+		-  cmd: kubectl apply -f deployment.yaml
+		- cmd: kubectl apply -f deployment.yaml
+		-  Go onto cmd prompt:
+				cmd: watch -n 0.1 curl http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+						- Note: For windows: 
+							- Open powershell: 
+								cmd: while (1) {curl http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10; sleep 5}
+			- you can see that the durign deployment the service went down
+
+(20) Autoscaling microservices with K8s:
+	- cmd: kubectl get po
+	- 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+	- Manually Increase no. of instances/replica sets using cmd line for currency-exchange:
+		- cmd:kubectl scale deployment currency-exchange --replicas=4 
+		- Increase no. of replicas using the deployment.yaml
+	- Autoscaling option:
+		- Add following to deployment.yaml of currency-exchange after probes defintion:
+			        resources:
+          				requests:
+            				cpu: "250m"  
+		- cmd:kubectl autoscale deployment currency-exchange --min=1 --max=4 --cpu-percent=1	
+		- Minimum no. of pods =1, maximum no. of pods = 3, aut0scale if cpu uilisation percent hits 1( typically in prod we wil say 70 or 80)
+		- Executing the above cmd will generate a horizontalpodautoscaler
+		- Get the horizontalpodautoscaler:
+			- cmd: kubectl get hpa
+		- cmd: kubectl get pods 
+			- you can see new pods launcing up as we have setup a watch cmd aftwrer a minute or tow
+	- Get cpu utilization:
+		- Note: Following cmds do not work and we get response : Metrics API not available
+		- cmd: kubectl top pod
+		- cmd: kubectl top nodes
+	- Finally deelte hpa:
+		- cd: kubectl delete hpa currency-exchange
+	- Deploy Currency exchange deployment.yaml with replicas =1 to bring down pods
+
+
+(30) delete all pods, service, deployments , replicasets etc. using a single label ( instead of deelting one by one) 
+	- get label using -o wide command 
+		-  cmd:kubectl get all -o wide
+	- label will be under selector column 
+	- cmd:kubectl delete all -l labelname ( E.g. kubectl delete all -l app=hello-world-rest-api)
+		- kubectl delete all -l app=currency-exchange
+		- kubectl delete all -l app=currency-conversion
+
+
+*****************

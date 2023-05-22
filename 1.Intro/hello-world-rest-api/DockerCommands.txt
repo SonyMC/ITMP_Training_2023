@@ -1,0 +1,14 @@
+Docker commands used for this demo:
+--------------------------------------
+
+**** Note*** - Take care to replace 'mailsonymathew' with your docker hub id
+
+Build image: 
+	- docker build -t mailsonymathew/hello-world-api-Apr2023:0.0.2.RELEASE .
+
+Run container:
+	- docker run -p 8080:8080 mailsonymathew/hello-world-api-Apr2023:0.0.2.RELEASE
+
+
+Push image to Docker hub:
+	- docker push mailsonymathew/hello-world-api-Apr2023:0.0.2.RELEASE
