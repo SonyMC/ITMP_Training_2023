@@ -62,7 +62,7 @@ region = "us-east-1"
 (4) Docker images:
 
 	-Note : Code - 
-			-4.spring-microservices-v2-main\05.kubernetes
+			-spring-microservices-v2-main
 
 I have created following images in docker hub:
 	- Currency Exchange Service: 
@@ -85,7 +85,7 @@ I have created following images in docker hub:
 (5) Deploy microservices containers:
 
 		- Microservice code and K8S deployment files are available in:
-			- D:\OneDrive\Study\DevOps\Devops Notes\Kubernetes\spring-microservices-v2-main\05.kubernetes
+			- spring-microservices-v2-main
 
 		- Ensure kubectl is working: 
 			- cmd: kubectl version
@@ -150,7 +150,7 @@ I have created following images in docker hub:
 		- kubectl get deployments
 	- Set up yaml file for deployment 'currency-exchange':
 		-   -
-			- cmd: cd 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+			- cmd: cd spring-microservices-v2-main\currency-exchange-service-kubernetes
 			- Get deployment in yaml format:
 				- cmd: kubectl get deployment currency-exchange -o yaml 
 				- will print the entire yaml in console 
@@ -202,7 +202,7 @@ I have created following images in docker hub:
 	- cmd: kubectl get all
 
 (12)Deploy currency-exchange from deployment-yaml :
-	- cd to : 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+	- cd to : spring-microservices-v2-main\currency-exchange-service-kubernetes
 	- cmd: kubectl apply -f deployment.yaml		   
 	- Get pods:
 		- cmd: kubectl get po
@@ -215,7 +215,7 @@ I have created following images in docker hub:
 		- cmd: curl http://104.154.40.180:8000/currency-exchange/from/USD/to/INR
 
 (13) Deploy currency-conversion-service using deployment.yaml:
-	- 4.spring-microservices-v2-main\05.kubernetes\currency-conversion-service-kubernetes
+	- spring-microservices-v2-main\currency-conversion-service-kubernetes
 	- Make changes in deployment.yaml file in currency-conversion folder
 	- Apply changes:
 		- cmd: kubectl apply -f deployment.yaml		
@@ -246,7 +246,7 @@ I have created following images in docker hub:
 
 (15) Deploy Currency conversion service:
 	- change image version in deployment.yaml 
-	- cd to the 4.spring-microservices-v2-main\05.kubernetes\currency-conversion-service-kubernetes
+	- cd to the spring-microservices-v2-main\currency-conversion-service-kubernetes
 	- compare difference:
 		- cmd: kubectl diff -f deployment.yaml
 			- Note: Does not work in windows
@@ -263,7 +263,7 @@ I have created following images in docker hub:
 
 (16) Centralized configuration for env variables instead of hard coding in yaml:
 	- Create config map:
-		- D:\OneDrive\Study\DevOps\Devops Notes\Kubernetes\spring-microservices-v2-main\05.kubernetes\currency-conversion-service-kubernetes
+		- spring-microservices-v2-main\currency-conversion-service-kubernetes
 			 - cmd: kubectl create configmap service-name --from-literal=key=value
 			 - E.g:
 				- cmd: kubectl create configmap currency-conversion --from-literal=CURRENCY_EXCHANGE_URI=http://currency-exchange
@@ -278,7 +278,7 @@ I have created following images in docker hub:
 			- cmd: 	kubectl get configmap currency-conversion -o yaml >> configmap.yaml
 
 (17) Add configmap.yaml to deployment.yaml:
-		- D:\OneDrive\Study\DevOps\Devops Notes\Kubernetes\spring-microservices-v2-main\05.kubernetes\currency-conversion-service-kubernetes
+		- spring-microservices-v2-main\currency-conversion-service-kubernetes
 		- clean and condense configmap.yaml
 		- open deployment.yaml:
 			- Add 3 hypens at teh end and copy paste contnts of configmap.yaml
@@ -306,7 +306,7 @@ I have created following images in docker hub:
 		- cmd: kubectl rollout histroy deployment currency-exchange:
 		- will show list of revisions 
 	- Go into currency-exchange deployment.yaml and deploy:
-		- go to 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+		- go to spring-microservices-v2-main\currency-exchange-service-kubernetes
 		- - change IMAGE to DUMMY -> purposeful error
 		- 
 		- cmd: kubectl apply -f deployment.yaml
@@ -331,7 +331,7 @@ I have created following images in docker hub:
 	- New dployment:
 		- Go into currency-exchange deployment.yaml and deploy:
 		- change IMAGE to docker push mailsonymathew/mmv2-docker-currency-exchange-service-kubernetes:0.0.12-SNAPSHOT
-		- go to 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+		- go to spring-microservices-v2-main\currency-exchange-service-kubernetes
 		- cmd: kubectl diff -f deployment.yaml
 			- Noe: needs installing diff utility in windows
 		- cmd: kubectl apply -f deployment.yaml
@@ -379,7 +379,7 @@ I have created following images in docker hub:
       restartPolicy: Always
 
 	- Deploy : 
-		- 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+		- spring-microservices-v2-main\currency-exchange-service-kubernetes
 		-  cmd: kubectl apply -f deployment.yaml
 		- cmd: kubectl apply -f deployment.yaml
 		-  Go onto cmd prompt:
@@ -391,7 +391,7 @@ I have created following images in docker hub:
 
 (20) Autoscaling microservices with K8s:
 	- cmd: kubectl get po
-	- 4.spring-microservices-v2-main\05.kubernetes\currency-exchange-service-kubernetes
+	- spring-microservices-v2-main\currency-exchange-service-kubernetes
 	- Manually Increase no. of instances/replica sets using cmd line for currency-exchange:
 		- cmd:kubectl scale deployment currency-exchange --replicas=4 
 		- Increase no. of replicas using the deployment.yaml
