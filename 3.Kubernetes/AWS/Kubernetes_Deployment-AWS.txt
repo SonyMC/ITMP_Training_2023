@@ -318,6 +318,9 @@ I have created following images in docker hub:
 						- Note: For windows: 
 							- Open powershell: 
 									cmd: while (1) {curl http://a44e9a7971f474d11967b06f6951f291-1423715187.us-east-1.elb.amazonaws.com:8100/currency-conversion-feign/from/USD/to/INR/quantity/10; sleep 5}
+
+
+
 			- you can see that the curency-conversion is still working
 	- cmd: kubectl get po
 		- You can see a pods with an invalid image name

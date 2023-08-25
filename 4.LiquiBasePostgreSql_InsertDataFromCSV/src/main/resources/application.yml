@@ -1,0 +1,28 @@
+spring:
+  profiles:
+    active: dev
+    #active: nonprod
+  application:
+    name: liquibase_postgresql_insert_data_from_csv 
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    
+  jpa:
+    database: postgresql
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: liquibasedemo
+  liquibase:
+    change-log: classpath:/db/changelog/changelog-master.xml
+    enabled: true
+server:
+  port: 8080
+ 
